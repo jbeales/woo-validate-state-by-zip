@@ -1,0 +1,4 @@
+node_modules
+.sublime-grunt.cache
+sftp-config.json
+.idea
