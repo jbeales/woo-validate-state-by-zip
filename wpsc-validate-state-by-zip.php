@@ -954,17 +954,30 @@ class WPSC_State_by_Zip {
 
 	public static function get_state_id_by_name( $state_name ) {
 		
+		global $wpdb;
+		$region_id_query = $wpdb->prepare( 'SELECT id FROM ' . WPSC_TABLE_REGION_TAX . ' WHERE `name` = %s', $state_name );
+		return $wpdb->get_var( $region_id_query );
+
 	}
 
 
 	public static function is_in_usa( $state ) {
-		if(is_int( $state ) ) {
-			$country_id = WPSC_Countries::get_country_id_by_region_id( $state );
-		} else {
-			// we probably have a full state name. Query the DB
+
+		if( ! is_int( $state ) ) {
+			$state = self::get_state_id_by_name( $state );
 		}
 
-		// figure out if the $state is in the USA
+		$country_id = WPSC_Countries::get_country_id_by_region_id( $state );
+
+		$country = WPSC_Countries::get_country( $country_id );
+		var_dump( $country );
+
+		if( $country && $country->get_id() > 0 ) {
+			return ( $country->get_isocode() == 'US' );
+		}
+
+		// fallback to false.
+		return false;
 	}
 
 	public static function does_state_match_zip( $state, $zip ) {
@@ -1014,6 +1027,9 @@ class WPSC_State_by_Zip {
 		if( empty( $shipping_state) ) {
 			$shipping_state = wpsc_get_customer_meta( 'shippingregion' );
 		}
+
+		self::is_in_usa( wpsc_get_customer_meta( 'billingstate' ) );
+		exit;
 		
 		
 		self::does_state_match_zip( wpsc_get_customer_meta( 'billingstate' ), wpsc_get_customer_meta( 'billingpostcode' ) );
