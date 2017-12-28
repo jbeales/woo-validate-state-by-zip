@@ -980,7 +980,7 @@ class WPSC_State_by_Zip {
 		return false;
 	}
 
-	public static function does_state_match_zip( $state, $zip ) {
+	public static function does_us_state_match_zip( $state, $zip ) {
 
 
 
