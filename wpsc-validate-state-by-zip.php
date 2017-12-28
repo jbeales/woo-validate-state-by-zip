@@ -998,11 +998,24 @@ class WPSC_State_by_Zip {
 
 	public static function does_us_state_match_zip( $state, $zip ) {
 
+		if( ! is_int( $state ) ) {
+			$state = self::get_state_id_by_name( $state );
+		}
 
+		
+		$state = self::get_state_code_by_id( $state );
 
+		// cast as string for use as an array key
+		$prefix = (string) substr( $zip, 0, 3 );
 
-		var_dump( $state );
-		var_dump( $zip );
+		if( in_array( $state, self::prefix_hash[ $prefix ] ) ) {
+
+			trigger_error( "State $state matches ZIP $zip\n" );
+			return true;
+		} 
+		trigger_error( "State $state DOES NOT MATCH ZIP $zip\n" );
+		return false;
+
 	}
 
 	/**
