@@ -951,6 +951,9 @@ class WPSC_State_by_Zip {
 	];
 
 
+	public static function does_state_match_zip( $state, $zip ) {
+		
+	}
 
 	/**
 	 * Modifies the $states variable if there are problems with the ZIP/State match.
