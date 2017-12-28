@@ -961,7 +961,7 @@ class WPSC_State_by_Zip {
 	}
 
 
-	public static function is_in_usa( $state ) {
+	public static function is_state_in_usa( $state ) {
 
 		if( ! is_int( $state ) ) {
 			$state = self::get_state_id_by_name( $state );
