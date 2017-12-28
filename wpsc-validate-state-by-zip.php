@@ -970,6 +970,13 @@ class WPSC_State_by_Zip {
 
 	}
 
+	public static function get_state_code_by_id( $region_id ) {
+
+		// We can pass in false because 
+		$region = WPSC_Countries::get_region( false, $region_id );
+		return $region->get_code();
+		
+	}
 
 	public static function is_state_in_usa( $state ) {
 
