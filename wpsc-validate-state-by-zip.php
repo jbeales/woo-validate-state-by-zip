@@ -980,14 +980,13 @@ class WPSC_State_by_Zip {
 
 	public static function is_state_in_usa( $state ) {
 
+
 		if( ! is_int( $state ) ) {
 			$state = self::get_state_id_by_name( $state );
 		}
 
 		$country_id = WPSC_Countries::get_country_id_by_region_id( $state );
-
 		$country = WPSC_Countries::get_country( $country_id );
-		var_dump( $country );
 
 		if( $country && $country->get_id() > 0 ) {
 			return ( $country->get_isocode() == 'US' );
