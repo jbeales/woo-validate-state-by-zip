@@ -955,8 +955,18 @@ class WPSC_State_by_Zip {
 	public static function get_state_id_by_name( $state_name ) {
 		
 		global $wpdb;
-		$region_id_query = $wpdb->prepare( 'SELECT id FROM ' . WPSC_TABLE_REGION_TAX . ' WHERE `name` = %s', $state_name );
-		return $wpdb->get_var( $region_id_query );
+
+		// memoized
+		static $hash = array();
+
+		if( isset( $hash[ $state_name ] ) ) {
+
+			$region_id_query = $wpdb->prepare( 'SELECT id FROM ' . WPSC_TABLE_REGION_TAX . ' WHERE `name` = %s', $state_name );
+			$hash[ $state_name ] = $wpdb->get_var( $region_id_query );
+
+		}
+
+		return $hash[ $state_name ];
 
 	}
 
