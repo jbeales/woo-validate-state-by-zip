@@ -959,7 +959,7 @@ class WPSC_State_by_Zip {
 		// memoized
 		static $hash = array();
 
-		if( isset( $hash[ $state_name ] ) ) {
+		if( ! isset( $hash[ $state_name ] ) ) {
 
 			$region_id_query = $wpdb->prepare( 'SELECT id FROM ' . WPSC_TABLE_REGION_TAX . ' WHERE `name` = %s', $state_name );
 			$hash[ $state_name ] = $wpdb->get_var( $region_id_query );
