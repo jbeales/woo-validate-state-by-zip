@@ -1000,44 +1000,50 @@ class WPSC_State_by_Zip {
 	public static function tev1_filter_func( $states ) {
 
 		//var_dump( $states );
+		$error_messages = array();
 
-		// we're not passed checkout info, so we have to re-make the object
-		$wpsc_checkout = new wpsc_checkout();
-		
-
-		// Get the form items, if we want, (using the uniquename as the key)
-		$billing_state = $wpsc_checkout->get_checkout_item( 'billingstate' );
-		$billing_postcode = $wpsc_checkout->get_checkout_item( 'billingpostcode' );
-
-		$shipping_state = $wpsc_checkout->get_checkout_item( 'shippingstate' );
-		$shipping_postcode = $wpsc_checkout->get_checkout_item( 'shippingpostcode' );
-
-		// how to get the actual value: $value = wpsc_get_customer_meta( $shipping_state->unique_name );
-		// so we probably don't have to do all the stuff above.
-		// Look at stuff in checkout.class.php lines 471-487 for special cases around empty states.
-		// 
-		// @TODO: Is this even in the USA? If not, just skip.
+	
 		
 		$billing_state = wpsc_get_customer_meta( 'billingstate' );
 		if( empty( $billing_state ) ) {
 			$billing_state = wpsc_get_customer_meta( 'billingregion' );
 		}
 
+		if( self::is_state_in_usa( $billing_state ) ) {
+			if( ! self::does_us_state_match_zip( $billing_state, wpsc_get_customer_meta( 'billingpostcode' ) ) ) {
+				$states['is_valid'] = false;
+				$error_messages[] = 'Your billing ZIP code does not match your billing state.';
+			}
+		}
+
+
 		$shipping_state = wpsc_get_customer_meta( 'shippingstate' );
 		if( empty( $shipping_state) ) {
 			$shipping_state = wpsc_get_customer_meta( 'shippingregion' );
 		}
 
-		self::is_in_usa( wpsc_get_customer_meta( 'billingstate' ) );
+		if( self::is_state_in_usa( $shipping_state ) ) {
+			if( ! self::does_us_state_match_zip( $shipping_state, wpsc_get_customer_meta( 'shippingpostcode' ) ) ) {
+				$states['is_valid'] = false;
+				$error_messages[] = 'Your shipping ZIP does not match your shipping state.';
+			}
+		}
+
+	
+		if( count( $error_messages > 0 ) ) {
+
+			// convert $states['error_messages'] into an array if it isn't already one. It seems to be
+			// treated as an array after it's initialized in wpsc-components/theme-engine-v1/helpers/ajax.php
+			if( ! is_array( $states['error_messages'] ) && !empty( $states['error_messages'] ) ) {
+				$states['error_messages'] = array( $states['error_messages'] );
+			}
+
+			$states['error_messages'] = array_merge( $states['error_messages'], $error_messages );
+		}
+
+	
+
 		exit;
-		
-		
-		self::does_state_match_zip( wpsc_get_customer_meta( 'billingstate' ), wpsc_get_customer_meta( 'billingpostcode' ) );
-		self::does_state_match_zip( wpsc_get_customer_meta( 'shippingstate' ), wpsc_get_customer_meta( 'shippingpostcode' ) );
-
-
-		exit;
-
 		return $states;
 
 
