@@ -951,8 +951,29 @@ class WPSC_State_by_Zip {
 	];
 
 
-	public static function does_state_match_zip( $state, $zip ) {
+
+	public static function get_state_id_by_name( $state_name ) {
 		
+	}
+
+
+	public static function is_in_usa( $state ) {
+		if(is_int( $state ) ) {
+			$country_id = WPSC_Countries::get_country_id_by_region_id( $state );
+		} else {
+			// we probably have a full state name. Query the DB
+		}
+
+		// figure out if the $state is in the USA
+	}
+
+	public static function does_state_match_zip( $state, $zip ) {
+
+
+
+
+		var_dump( $state );
+		var_dump( $zip );
 	}
 
 	/**
@@ -969,9 +990,7 @@ class WPSC_State_by_Zip {
 
 		// we're not passed checkout info, so we have to re-make the object
 		$wpsc_checkout = new wpsc_checkout();
-		foreach( $wpsc_checkout->checkout_items as $checkout_item ) {
-			var_dump( $checkout_item );
-		}
+		
 
 		// Get the form items, if we want, (using the uniquename as the key)
 		$billing_state = $wpsc_checkout->get_checkout_item( 'billingstate' );
@@ -985,6 +1004,22 @@ class WPSC_State_by_Zip {
 		// Look at stuff in checkout.class.php lines 471-487 for special cases around empty states.
 		// 
 		// @TODO: Is this even in the USA? If not, just skip.
+		
+		$billing_state = wpsc_get_customer_meta( 'billingstate' );
+		if( empty( $billing_state ) ) {
+			$billing_state = wpsc_get_customer_meta( 'billingregion' );
+		}
+
+		$shipping_state = wpsc_get_customer_meta( 'shippingstate' );
+		if( empty( $shipping_state) ) {
+			$shipping_state = wpsc_get_customer_meta( 'shippingregion' );
+		}
+		
+		
+		self::does_state_match_zip( wpsc_get_customer_meta( 'billingstate' ), wpsc_get_customer_meta( 'billingpostcode' ) );
+		self::does_state_match_zip( wpsc_get_customer_meta( 'shippingstate' ), wpsc_get_customer_meta( 'shippingpostcode' ) );
+
+
 		exit;
 
 		return $states;
