@@ -1,7 +1,20 @@
 <?php
 
+/*
+Plugin Name: Validate State by ZIP for WP e-Commerce
+Plugin URI: 
+Description: Checks that a customer's ZIP code matches the selected state when submitting an order.
+Version: 1.0.0
+Author: John Beales
+Author URI: http://johnbeales.com
+License: http://www.apache.org/licenses/LICENSE-2.0
+Text Domain: sbz
 
-class wpsc_state_by_zip {
+*/
+
+
+
+class WPSC_State_by_Zip {
 
 
 	const prefix_hash = [
@@ -938,7 +951,54 @@ class wpsc_state_by_zip {
 	];
 
 
+
+	/**
+	 * Modifies the $states variable if there are problems with the ZIP/State match.
+	 * @param  array $states [ 
+	 *                       	(bool)is_valid=> set to false to say the form is invalid
+	 *                        	(Array) error_messages => An array of strings that are error messages.
+	 * 						 ]
+	 * @return array         The possibly-updated $states
+	 */
+	public static function tev1_filter_func( $states ) {
+
+		//var_dump( $states );
+
+		// we're not passed checkout info, so we have to re-make the object
+		$wpsc_checkout = new wpsc_checkout();
+		foreach( $wpsc_checkout->checkout_items as $checkout_item ) {
+			var_dump( $checkout_item );
+		}
+
+		// Get the form items, if we want, (using the uniquename as the key)
+		$billing_state = $wpsc_checkout->get_checkout_item( 'billingstate' );
+		$billing_postcode = $wpsc_checkout->get_checkout_item( 'billingpostcode' );
+
+		$shipping_state = $wpsc_checkout->get_checkout_item( 'shippingstate' );
+		$shipping_postcode = $wpsc_checkout->get_checkout_item( 'shippingpostcode' );
+
+		// how to get the actual value: $value = wpsc_get_customer_meta( $shipping_state->unique_name );
+		// so we probably don't have to do all the stuff above.
+		// Look at stuff in checkout.class.php lines 471-487 for special cases around empty states.
+		// 
+		// @TODO: Is this even in the USA? If not, just skip.
+		exit;
+
+		return $states;
+
+
+	}
+
+
+	public static function init() {
+
+		// TEv1 validation filter.
+		add_filter('wpsc_checkout_form_validation', array(self::class, 'tev1_filter_func') );
+	}
+
 }
+
+add_action( 'wpsc_init', array('WPSC_State_by_Zip', 'init' ) );
 
 
 
