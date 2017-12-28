@@ -963,6 +963,9 @@ class WPSC_State_by_Zip {
 
 			$region_id_query = $wpdb->prepare( 'SELECT id FROM ' . WPSC_TABLE_REGION_TAX . ' WHERE `name` = %s', $state_name );
 			$hash[ $state_name ] = $wpdb->get_var( $region_id_query );
+			if( is_numeric( $hash[ $state_name ] ) ) {
+				$hash[ $state_name ] = intval( $hash[ $state_name ] );
+			}
 
 		}
 
@@ -1038,6 +1041,10 @@ class WPSC_State_by_Zip {
 			$billing_state = wpsc_get_customer_meta( 'billingregion' );
 		}
 
+		if( is_numeric( $billing_state ) ) {
+			$billing_state = intval( $billing_state );
+		}
+
 		if( self::is_state_in_usa( $billing_state ) ) {
 			if( ! self::does_us_state_match_zip( $billing_state, wpsc_get_customer_meta( 'billingpostcode' ) ) ) {
 				$states['is_valid'] = false;
@@ -1049,6 +1056,10 @@ class WPSC_State_by_Zip {
 		$shipping_state = wpsc_get_customer_meta( 'shippingstate' );
 		if( empty( $shipping_state) ) {
 			$shipping_state = wpsc_get_customer_meta( 'shippingregion' );
+		}
+
+		if( is_numeric( $shipping_state ) ) {
+			$shipping_state = intval( $shipping_state );
 		}
 
 		if( self::is_state_in_usa( $shipping_state ) ) {
