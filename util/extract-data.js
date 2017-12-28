@@ -5,6 +5,9 @@
  *
  * Each ZIP may span multiple states, so the keys are ZIP prefixes, and the values
  * are arrays of possible states for the ZIP prefix.
+ *
+ * IMPORTANT: Make sure to merge the output of this function with the multi-state ZIPs
+ * found here: https://gis.stackexchange.com/a/223445/102779
  */
 
 
