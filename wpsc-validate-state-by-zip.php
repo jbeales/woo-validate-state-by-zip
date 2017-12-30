@@ -140,8 +140,7 @@ class WPSC_State_by_Zip {
 		if( self::is_state_in_usa( $billing_state ) ) {
 			if( ! self::does_us_state_match_zip( $billing_state, wpsc_get_customer_meta( 'billingpostcode' ) ) ) {
 				$states['is_valid'] = false;
-				$billing_error = ;
-				self::update_checkout_field_error_message( 'billingpostcode', _( 'Your billing ZIP code does not match your billing state.', 'sbz' ) );
+				self::update_checkout_field_error_message( 'billingpostcode', __( 'Your billing ZIP code does not match your billing state.', 'sbz' ) );
 			}
 		}
 
@@ -158,7 +157,7 @@ class WPSC_State_by_Zip {
 		if( self::is_state_in_usa( $shipping_state ) ) {
 			if( ! self::does_us_state_match_zip( $shipping_state, wpsc_get_customer_meta( 'shippingpostcode' ) ) ) {
 				$states['is_valid'] = false;
-				self::update_checkout_field_error_message( 'shippingpostcode', _e( 'Your shipping ZIP does not match your shipping state.', 'sbz' ) );
+				self::update_checkout_field_error_message( 'shippingpostcode', __( 'Your shipping ZIP does not match your shipping state.', 'sbz' ) );
 			}
 		}
 
