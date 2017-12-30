@@ -161,22 +161,7 @@ class WPSC_State_by_Zip {
 			}
 		}
 
-	/*
-		if( count( $error_messages > 0 ) ) {
-
-			// convert $states['error_messages'] into an array if it isn't already one. It seems to be
-			// treated as an array after it's initialized in wpsc-components/theme-engine-v1/helpers/ajax.php
-			if( ! is_array( $states['error_messages'] ) && !empty( $states['error_messages'] ) ) {
-				$states['error_messages'] = array( $states['error_messages'] );
-				$states['error_messages'] = array_merge( $states['error_messages'], $error_messages );
-			} else {
-				$states['error_messages'] = $error_messages;
-			}
-		}
-		*/
-
 		return $states;
-
 	}
 
 
