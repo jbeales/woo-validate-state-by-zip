@@ -17,6 +17,150 @@ Text Domain: sbz
 class WPSC_State_by_Zip {
 
 
+	public static function get_state_id_by_name( $state_name ) {
+		
+		global $wpdb;
+
+		// memoized
+		static $hash = array();
+
+		if( ! isset( $hash[ $state_name ] ) ) {
+
+			$region_id_query = $wpdb->prepare( 'SELECT id FROM ' . WPSC_TABLE_REGION_TAX . ' WHERE `name` = %s', $state_name );
+			$hash[ $state_name ] = $wpdb->get_var( $region_id_query );
+			if( is_numeric( $hash[ $state_name ] ) ) {
+				$hash[ $state_name ] = intval( $hash[ $state_name ] );
+			}
+
+		}
+
+		return $hash[ $state_name ];
+
+	}
+
+	public static function get_state_code_by_id( $region_id ) {
+
+		// We can pass in false because 
+		$region = WPSC_Countries::get_region( false, $region_id );
+		return $region->get_code();
+		
+	}
+
+	public static function is_state_in_usa( $state ) {
+
+
+		if( ! is_int( $state ) ) {
+			$state = self::get_state_id_by_name( $state );
+		}
+
+		$country_id = WPSC_Countries::get_country_id_by_region_id( $state );
+		$country = WPSC_Countries::get_country( $country_id );
+
+		if( $country && $country->get_id() > 0 ) {
+			return ( $country->get_isocode() == 'US' );
+		}
+
+		// fallback to false.
+		return false;
+	}
+
+	public static function does_us_state_match_zip( $state, $zip ) {
+
+		if( ! is_int( $state ) ) {
+			$state = self::get_state_id_by_name( $state );
+		}
+
+		
+		$state = self::get_state_code_by_id( $state );
+
+		// cast as string for use as an array key
+		$prefix = (string) substr( $zip, 0, 3 );
+
+		if( in_array( $state, self::prefix_hash[ $prefix ] ) ) {
+
+			trigger_error( "State $state matches ZIP $zip\n" );
+			return true;
+		} 
+		trigger_error( "State $state DOES NOT MATCH ZIP $zip\n" );
+		return false;
+
+	}
+
+	/**
+	 * Modifies the $states variable if there are problems with the ZIP/State match.
+	 * @param  array $states [ 
+	 *                       	(bool)is_valid=> set to false to say the form is invalid
+	 *                        	(Array) error_messages => An array of strings that are error messages.
+	 * 						 ]
+	 * @return array         The possibly-updated $states
+	 */
+	public static function tev1_filter_func( $states ) {
+
+		//var_dump( $states );
+		$error_messages = array();
+
+	
+		
+		$billing_state = wpsc_get_customer_meta( 'billingstate' );
+		if( empty( $billing_state ) ) {
+			$billing_state = wpsc_get_customer_meta( 'billingregion' );
+		}
+
+		if( is_numeric( $billing_state ) ) {
+			$billing_state = intval( $billing_state );
+		}
+
+		if( self::is_state_in_usa( $billing_state ) ) {
+			if( ! self::does_us_state_match_zip( $billing_state, wpsc_get_customer_meta( 'billingpostcode' ) ) ) {
+				$states['is_valid'] = false;
+				$error_messages[] = 'Your billing ZIP code does not match your billing state.';
+			}
+		}
+
+
+		$shipping_state = wpsc_get_customer_meta( 'shippingstate' );
+		if( empty( $shipping_state) ) {
+			$shipping_state = wpsc_get_customer_meta( 'shippingregion' );
+		}
+
+		if( is_numeric( $shipping_state ) ) {
+			$shipping_state = intval( $shipping_state );
+		}
+
+		if( self::is_state_in_usa( $shipping_state ) ) {
+			if( ! self::does_us_state_match_zip( $shipping_state, wpsc_get_customer_meta( 'shippingpostcode' ) ) ) {
+				$states['is_valid'] = false;
+				$error_messages[] = 'Your shipping ZIP does not match your shipping state.';
+			}
+		}
+
+	
+		if( count( $error_messages > 0 ) ) {
+
+			// convert $states['error_messages'] into an array if it isn't already one. It seems to be
+			// treated as an array after it's initialized in wpsc-components/theme-engine-v1/helpers/ajax.php
+			if( ! is_array( $states['error_messages'] ) && !empty( $states['error_messages'] ) ) {
+				$states['error_messages'] = array( $states['error_messages'] );
+				$states['error_messages'] = array_merge( $states['error_messages'], $error_messages );
+			} else {
+				$states['error_messages'] = $error_messages;
+			}
+		}
+
+		return $states;
+
+	}
+
+
+	public static function init() {
+
+		// TEv1 validation filter.
+		add_filter('wpsc_checkout_form_validation', array(self::class, 'tev1_filter_func') );
+	}
+
+
+	
+
 	const prefix_hash = [
 	'005' => ['NY'],
 	'006' => ['PR'],
@@ -951,147 +1095,6 @@ class WPSC_State_by_Zip {
 	];
 
 
-
-	public static function get_state_id_by_name( $state_name ) {
-		
-		global $wpdb;
-
-		// memoized
-		static $hash = array();
-
-		if( ! isset( $hash[ $state_name ] ) ) {
-
-			$region_id_query = $wpdb->prepare( 'SELECT id FROM ' . WPSC_TABLE_REGION_TAX . ' WHERE `name` = %s', $state_name );
-			$hash[ $state_name ] = $wpdb->get_var( $region_id_query );
-			if( is_numeric( $hash[ $state_name ] ) ) {
-				$hash[ $state_name ] = intval( $hash[ $state_name ] );
-			}
-
-		}
-
-		return $hash[ $state_name ];
-
-	}
-
-	public static function get_state_code_by_id( $region_id ) {
-
-		// We can pass in false because 
-		$region = WPSC_Countries::get_region( false, $region_id );
-		return $region->get_code();
-		
-	}
-
-	public static function is_state_in_usa( $state ) {
-
-
-		if( ! is_int( $state ) ) {
-			$state = self::get_state_id_by_name( $state );
-		}
-
-		$country_id = WPSC_Countries::get_country_id_by_region_id( $state );
-		$country = WPSC_Countries::get_country( $country_id );
-
-		if( $country && $country->get_id() > 0 ) {
-			return ( $country->get_isocode() == 'US' );
-		}
-
-		// fallback to false.
-		return false;
-	}
-
-	public static function does_us_state_match_zip( $state, $zip ) {
-
-		if( ! is_int( $state ) ) {
-			$state = self::get_state_id_by_name( $state );
-		}
-
-		
-		$state = self::get_state_code_by_id( $state );
-
-		// cast as string for use as an array key
-		$prefix = (string) substr( $zip, 0, 3 );
-
-		if( in_array( $state, self::prefix_hash[ $prefix ] ) ) {
-
-			trigger_error( "State $state matches ZIP $zip\n" );
-			return true;
-		} 
-		trigger_error( "State $state DOES NOT MATCH ZIP $zip\n" );
-		return false;
-
-	}
-
-	/**
-	 * Modifies the $states variable if there are problems with the ZIP/State match.
-	 * @param  array $states [ 
-	 *                       	(bool)is_valid=> set to false to say the form is invalid
-	 *                        	(Array) error_messages => An array of strings that are error messages.
-	 * 						 ]
-	 * @return array         The possibly-updated $states
-	 */
-	public static function tev1_filter_func( $states ) {
-
-		//var_dump( $states );
-		$error_messages = array();
-
-	
-		
-		$billing_state = wpsc_get_customer_meta( 'billingstate' );
-		if( empty( $billing_state ) ) {
-			$billing_state = wpsc_get_customer_meta( 'billingregion' );
-		}
-
-		if( is_numeric( $billing_state ) ) {
-			$billing_state = intval( $billing_state );
-		}
-
-		if( self::is_state_in_usa( $billing_state ) ) {
-			if( ! self::does_us_state_match_zip( $billing_state, wpsc_get_customer_meta( 'billingpostcode' ) ) ) {
-				$states['is_valid'] = false;
-				$error_messages[] = 'Your billing ZIP code does not match your billing state.';
-			}
-		}
-
-
-		$shipping_state = wpsc_get_customer_meta( 'shippingstate' );
-		if( empty( $shipping_state) ) {
-			$shipping_state = wpsc_get_customer_meta( 'shippingregion' );
-		}
-
-		if( is_numeric( $shipping_state ) ) {
-			$shipping_state = intval( $shipping_state );
-		}
-
-		if( self::is_state_in_usa( $shipping_state ) ) {
-			if( ! self::does_us_state_match_zip( $shipping_state, wpsc_get_customer_meta( 'shippingpostcode' ) ) ) {
-				$states['is_valid'] = false;
-				$error_messages[] = 'Your shipping ZIP does not match your shipping state.';
-			}
-		}
-
-	
-		if( count( $error_messages > 0 ) ) {
-
-			// convert $states['error_messages'] into an array if it isn't already one. It seems to be
-			// treated as an array after it's initialized in wpsc-components/theme-engine-v1/helpers/ajax.php
-			if( ! is_array( $states['error_messages'] ) && !empty( $states['error_messages'] ) ) {
-				$states['error_messages'] = array( $states['error_messages'] );
-				$states['error_messages'] = array_merge( $states['error_messages'], $error_messages );
-			} else {
-				$states['error_messages'] = $error_messages;
-			}
-		}
-
-		return $states;
-
-	}
-
-
-	public static function init() {
-
-		// TEv1 validation filter.
-		add_filter('wpsc_checkout_form_validation', array(self::class, 'tev1_filter_func') );
-	}
 
 }
 
