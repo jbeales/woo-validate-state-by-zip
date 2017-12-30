@@ -77,11 +77,8 @@ class WPSC_State_by_Zip {
 		$prefix = (string) substr( $zip, 0, 3 );
 
 		if( in_array( $state, self::prefix_hash[ $prefix ] ) ) {
-
-			trigger_error( "State $state matches ZIP $zip\n" );
 			return true;
 		} 
-		trigger_error( "State $state DOES NOT MATCH ZIP $zip\n" );
 		return false;
 
 	}
