@@ -95,6 +95,22 @@ class WPSC_State_by_Zip {
 	 */
 	public static function update_checkout_field_error_message( $uniquename, $message ) {
 
+		global $wpsc_checkout_error_messages;
+
+		// we need to get the form data ID from the uniquename.
+		$checkout = new wpsc_checkout();
+		$form_item = $checkout->get_checkout_item( $uniquename );
+
+
+
+		if( isset( $wpsc_checkout_error_messages[ $form_id->id ] ) ) {
+			$wpsc_checkout_error_messages[ $form_item->id ] = '<br>' . $message;
+		} else {
+			$wpsc_checkout_error_messages[ $form_item->id ] = $message;
+		}
+
+		wpsc_update_customer_meta( 'checkout_error_messages'    , $wpsc_checkout_error_messages     );
+		
 	}
 
 	/**
