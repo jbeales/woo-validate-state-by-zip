@@ -169,6 +169,8 @@ class WPSC_State_by_Zip {
 
 		// TEv1 validation filter.
 		add_filter('wpsc_checkout_form_validation', array(self::class, 'tev1_filter_func') );
+
+		// @TODO: Make this work with TEv2.
 	}
 
 
