@@ -83,6 +83,20 @@ class WPSC_State_by_Zip {
 
 	}
 
+
+	/**
+	 * Updates the checkout error message, or adds a new one if one doesn't exist
+	 * for the form field identified by $uniquename.
+	 * 
+	 * @param  string $uniquename The form field's uniquename - this is $checkout_item->uniquename, where
+	 *                            each checkout item corresponds to a row in the WPSC_TABLE_CHECKOUT_FORMS table.
+	 * @param  string $message    The error message to show the user.
+	 * @return void
+	 */
+	public static function update_checkout_field_error_message( $uniquename, $message ) {
+
+	}
+
 	/**
 	 * Modifies the $states variable if there are problems with the ZIP/State match.
 	 * @param  array $states [ 
