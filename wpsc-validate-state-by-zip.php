@@ -1080,15 +1080,9 @@ class WPSC_State_by_Zip {
 			} else {
 				$states['error_messages'] = $error_messages;
 			}
-
-			
 		}
 
-	
-
-		exit;
 		return $states;
-
 
 	}
 
