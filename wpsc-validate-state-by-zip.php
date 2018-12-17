@@ -14,64 +14,37 @@ Text Domain: sbz
 
 
 
-class WPSC_State_by_Zip {
 
 
-	public static function get_state_id_by_name( $state_name ) {
-		
-		global $wpdb;
 
-		// memoized
-		static $hash = array();
+add_action( 'woocommerce_after_checkout_validation', array( 'Woo_Validate_State_by_Zip', 'validate' ), 10, 2 );
 
-		if( ! isset( $hash[ $state_name ] ) ) {
 
-			$region_id_query = $wpdb->prepare( 'SELECT id FROM ' . WPSC_TABLE_REGION_TAX . ' WHERE `name` = %s', $state_name );
-			$hash[ $state_name ] = $wpdb->get_var( $region_id_query );
-			if( is_numeric( $hash[ $state_name ] ) ) {
-				$hash[ $state_name ] = intval( $hash[ $state_name ] );
+class Woo_Validate_State_by_Zip {
+
+
+	public static function validate( $data, $errors ) {
+
+	
+		if( $data['billing_country'] === 'US' ) {
+			if( ! self::does_us_state_match_zip( $data['billing_state'], $data['billing_postcode'] ) ) {
+				$errors->add( 'validation', __('The Billing ZIP code does not match the billing state.', 'sbz' ) );
 			}
-
 		}
 
-		return $hash[ $state_name ];
+
+		if( $data['shipping_country'] === 'US' ) {
+			if( !self::does_us_state_match_zip( $data['shipping_state'], $data['shipping_postcode'] ) ) {
+				$errors->add( 'validation', __('The Shipping ZIP code does not match the shipping state.', 'sbz' ) );
+			}
+		}
+	
 
 	}
 
-	public static function get_state_code_by_id( $region_id ) {
-
-		// We can pass in false because 
-		$region = WPSC_Countries::get_region( false, $region_id );
-		return $region->get_code();
-		
-	}
-
-	public static function is_state_in_usa( $state ) {
-
-
-		if( ! is_int( $state ) ) {
-			$state = self::get_state_id_by_name( $state );
-		}
-
-		$country_id = WPSC_Countries::get_country_id_by_region_id( $state );
-		$country = WPSC_Countries::get_country( $country_id );
-
-		if( $country && $country->get_id() > 0 ) {
-			return ( $country->get_isocode() == 'US' );
-		}
-
-		// fallback to false.
-		return false;
-	}
+	
 
 	public static function does_us_state_match_zip( $state, $zip ) {
-
-		if( ! is_int( $state ) ) {
-			$state = self::get_state_id_by_name( $state );
-		}
-
-		
-		$state = self::get_state_code_by_id( $state );
 
 		// cast as string for use as an array key
 		$prefix = (string) substr( $zip, 0, 3 );
@@ -83,95 +56,6 @@ class WPSC_State_by_Zip {
 
 	}
 
-
-	/**
-	 * Updates the checkout error message, or adds a new one if one doesn't exist
-	 * for the form field identified by $uniquename.
-	 * 
-	 * @param  string $uniquename The form field's uniquename - this is $checkout_item->uniquename, where
-	 *                            each checkout item corresponds to a row in the WPSC_TABLE_CHECKOUT_FORMS table.
-	 * @param  string $message    The error message to show the user.
-	 * @return void
-	 */
-	public static function update_checkout_field_error_message( $uniquename, $message ) {
-
-		global $wpsc_checkout_error_messages;
-
-		// we need to get the form data ID from the uniquename.
-		$checkout = new wpsc_checkout();
-		$form_item = $checkout->get_checkout_item( $uniquename );
-
-
-
-		if( isset( $wpsc_checkout_error_messages[ $form_id->id ] ) ) {
-			$wpsc_checkout_error_messages[ $form_item->id ] = '<br>' . $message;
-		} else {
-			$wpsc_checkout_error_messages[ $form_item->id ] = $message;
-		}
-
-		wpsc_update_customer_meta( 'checkout_error_messages'    , $wpsc_checkout_error_messages     );
-		
-	}
-
-	/**
-	 * Modifies the $states variable if there are problems with the ZIP/State match.
-	 * @param  array $states [ 
-	 *                       	(bool)is_valid=> set to false to say the form is invalid
-	 *                        	(Array) error_messages => An array of strings that are error messages.
-	 * 						 ]
-	 * @return array         The possibly-updated $states
-	 */
-	public static function tev1_filter_func( $states ) {
-
-		//var_dump( $states );
-		$error_messages = array();
-
-	
-		
-		$billing_state = wpsc_get_customer_meta( 'billingstate' );
-		if( empty( $billing_state ) ) {
-			$billing_state = wpsc_get_customer_meta( 'billingregion' );
-		}
-
-		if( is_numeric( $billing_state ) ) {
-			$billing_state = intval( $billing_state );
-		}
-
-		if( self::is_state_in_usa( $billing_state ) ) {
-			if( ! self::does_us_state_match_zip( $billing_state, wpsc_get_customer_meta( 'billingpostcode' ) ) ) {
-				$states['is_valid'] = false;
-				self::update_checkout_field_error_message( 'billingpostcode', __( 'Your billing ZIP code does not match your billing state.', 'sbz' ) );
-			}
-		}
-
-
-		$shipping_state = wpsc_get_customer_meta( 'shippingstate' );
-		if( empty( $shipping_state) ) {
-			$shipping_state = wpsc_get_customer_meta( 'shippingregion' );
-		}
-
-		if( is_numeric( $shipping_state ) ) {
-			$shipping_state = intval( $shipping_state );
-		}
-
-		if( self::is_state_in_usa( $shipping_state ) ) {
-			if( ! self::does_us_state_match_zip( $shipping_state, wpsc_get_customer_meta( 'shippingpostcode' ) ) ) {
-				$states['is_valid'] = false;
-				self::update_checkout_field_error_message( 'shippingpostcode', __( 'Your shipping ZIP does not match your shipping state.', 'sbz' ) );
-			}
-		}
-
-		return $states;
-	}
-
-
-	public static function init() {
-
-		// TEv1 validation filter.
-		add_filter('wpsc_checkout_form_validation', array(self::class, 'tev1_filter_func') );
-
-		// @TODO: Make this work with TEv2.
-	}
 
 
 	
@@ -1109,11 +993,7 @@ class WPSC_State_by_Zip {
 	'999' => ['AK']
 	];
 
-
-
 }
-
-add_action( 'wpsc_init', array('WPSC_State_by_Zip', 'init' ) );
 
 
 
