@@ -1,7 +1,7 @@
 <?php
 
 /*
-Plugin Name: Validate State by ZIP for WP e-Commerce
+Plugin Name: Validate State by ZIP for WooCommerce
 Plugin URI: 
 Description: Checks that a customer's ZIP code matches the selected state when submitting an order.
 Version: 1.0.0
